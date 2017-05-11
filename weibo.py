@@ -8,12 +8,17 @@ import json
 import rsa
 import binascii
 import requests
+import time
 
+from setting import getAgent
 
 # 预登陆url
 prelogin_url = "https://login.sina.com.cn/sso/prelogin.php?"
 # 登录url
 login_url = 'http://login.sina.com.cn/sso/login.php?client=ssologin.js(v1.4.18)'
+
+categoryUrl = 'http://weibo.com/aj/v6/user/newcard?'
+
 # 预登陆参数
 parameters = {
     'entry': 'weibo',
@@ -44,10 +49,13 @@ postdata = {
     'url': 'http://www.weibo.com/ajaxlogin.php?framelogin=1&callback=parent.sinaSSOController.feedBackUrlCallBack',
     'returntype': 'META'
 }
+
+headers = {'User-Agent': getAgent()}
+
 # 这里用requests库来处理cookie
 s = requests.session()
 
-# 从与登录中获取需要的参数
+# 从预登录中获取需要的参数
 def get_servertime():
     r = s.get(url=prelogin_url,params=parameters)
     p = r.text[35:len(r.text)-1]
@@ -84,7 +92,6 @@ def login(username, pwd):
     postdata['su'] = get_user(username)
     postdata['sp'] = get_pwd(pwd, servertime, nonce, pubkey)
     print postdata
-    headers = {'User-Agent': 'Mozilla/5.0 (X11; Linux i686; rv:8.0) Gecko/20100101 Firefox/8.0'}
 
     r = s.post(url=login_url, data=postdata, headers=headers)
     print r.text,r.status_code
@@ -99,4 +106,74 @@ def login(username, pwd):
     print rq.text
 
 
-login('your mobile num', 'password')
+# 关注
+# 获取全部列表  我的id:2529091407
+all_url = 'http://d.weibo.com/1087030002_2975_1002_0' #体育 ?ajaxpagelet=1&__ref=/1087030002_2975_1002_0
+follow_url = 'http://d.weibo.com/aj/f/followed?ajwvr=6&__rnd=' + str(time.time()).replace('.', '')# __rnd=1494415341464
+followData = {
+    'uid' : '',
+    'objectid' : '',
+    'f' : '1',
+    'extra' : '',
+    'refer_sort' : '',
+    'refer_flag' : '1087030701_2975_1002_0',
+    'location' : 'page_1087030002_2975_1002_0_home',
+    'oid' : '2529091407',
+    'wforce' : '1',
+    'nogroup' : 'false',
+    'template' : '1',
+    '_t' : '0',
+    # 'fnick' : ''
+}
+
+# model
+class Person:
+    def __init__(self, userID, name, fans):
+        self.name = name
+        self.fans = fans
+        self.userID = userID
+
+# 获取体育第一页并且关注
+def getAllPerson():
+    r = s.get(url=all_url)
+    text = r.text.encode('utf-8')
+    a = text.count("follow_item S_line2")
+    # print r.text
+    num = text.find('follow_item S_line2')
+    text = text[num : len(text)]
+    print a
+    ids = []
+    for x in range(a):
+        print x
+        num1 = text.find('usercard=')
+        num2 = text.find('title=')
+        num3 = text.find('粉丝')
+        userid = text[num1 + 14 : num1 + 24]
+        str2 = text[num2 + 8: num2 + 52]
+        s2 = str2.rfind('\" ')
+        title = str2[0:(s2-1)]
+        str3 = text[num3 + 26 : num3 + 36]
+        s3 = str3.rfind('<')
+        fans = str3[0:s3]
+        print userid, title, fans
+        per = Person(userid, title, fans)
+        ids.append(per)
+        text = text[num3 + 50 : len(text)]
+    print '---获取当前页除推荐外的人--'
+    print ids[0].name
+
+
+    # 关注粉丝大于1000万的人
+    for a in range(len(ids)):
+        p = ids[a]
+        if "万" in p.fans:
+            count = str(p.fans)[0 : (len(p.fans) - 3)]
+            if int(count) >= 200:
+                followData['uid'] = p.userID
+                # followData['fnick'] = p.name
+                print p.name, p.userID, follow_url, followData
+                r = s.post(url=follow_url, data=followData, headers=headers)
+                print r.text
+
+login('name', 'psd')
+getAllPerson()

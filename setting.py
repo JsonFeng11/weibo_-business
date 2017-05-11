@@ -4,6 +4,56 @@
 
 import random
 
+# 登录相关
+# 预登陆url
+prelogin_url = "https://login.sina.com.cn/sso/prelogin.php?"
+# 登录url
+login_url = 'http://login.sina.com.cn/sso/login.php?client=ssologin.js(v1.4.18)'
+
+categoryUrl = 'http://weibo.com/aj/v6/user/newcard?'
+
+# 预登陆参数
+parameters = {
+    'entry': 'weibo',
+    'callback': 'sinaSSOController.preloginCallBack',
+    'su': '',
+    'rsakt': 'mod',
+    'client': 'ssologin.js(v1.4.18)',
+    '_': '1494208589026'
+}
+# 登录参数
+postdata = {
+    'entry': 'weibo',
+    'gateway': '1',
+    'from': '',
+    'savestate': '7',
+    'useticket': '1',
+    'pagerefer': '',
+    'vsnf': '1',
+    'su': '',
+    'service': 'miniblog',
+    'servertime': '',
+    'nonce': '',
+    'pwencode': 'rsa2',
+    'rsakv': '',
+    'sp': '',
+    'encoding': 'UTF-8',
+    'prelt': '27',
+    'url': 'http://www.weibo.com/ajaxlogin.php?framelogin=1&callback=parent.sinaSSOController.feedBackUrlCallBack',
+    'returntype': 'META'
+}
+
+headers = {
+    'User-Agent' : "Mozilla/5.0 (Linux; U; Android 1.6; en-us; SonyEricssonX10i Build/R1AA056) AppleWebKit/528.5  (KHTML, like Gecko) Version/3.1.2 Mobile Safari/525.20.1",
+    'Accept' : 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+    }
+
+
+
+
+
+
+
 def getAgent():
     return random.choice(agents)
 

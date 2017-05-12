@@ -113,9 +113,6 @@ def login(username, pwd):
     rq = s.get(lurl)
     # print rq.text
 
-# login('17088843854', '17088843854d')
-
-
 
 
 

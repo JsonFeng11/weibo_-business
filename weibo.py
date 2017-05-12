@@ -202,7 +202,7 @@ def followCurpagePer(page):
     # headers.pop('Referer')
 
 
-login('17602136674', '17602136674f')
+login('phonenum', 'psd')
 
 # 循环页数
 while curpage <= 2:

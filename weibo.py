@@ -21,7 +21,7 @@ prelogin_url = "https://login.sina.com.cn/sso/prelogin.php?"
 login_url = 'http://login.sina.com.cn/sso/login.php?client=ssologin.js(v1.4.18)'
 
 categoryUrl = 'http://weibo.com/aj/v6/user/newcard?'
-
+myUserId = ''
 # 预登陆参数
 parameters = {
     'entry': 'weibo',
@@ -58,6 +58,17 @@ headers = {
     'Accept' : 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
     }
 
+
+# model
+class Person:
+    def __init__(self, userID, name, fans):
+        self.name = name
+        self.fans = fans
+        self.userID = userID
+# class userModel:
+#     def __init__(self, uid, name):
+#         self.uid = uid
+#         self.name = name
 
 
 # 这里用requests库来处理cookie
@@ -112,43 +123,40 @@ def login(username, pwd):
     lurl = 'http://weibo.com/' + p2.search(page.text).group(1)
     rq = s.get(lurl)
     # print rq.text
+    text = rq.text
+    num1 = text.find("$CONFIG['uid']=")
+    num2 = text.find("$CONFIG['onick']=")
+    str2 = text[num2 + 1 : 40]
+    num3 =  str2.rfind("';")
+    # user['userID'] = text[num1+1 : num1 + 11]
+    # user['name'] = str2[1:num3]
+    user = Person(text[num1+1 : num1 + 11], str2[1:num3], '')
+    myUserId = text[num1 + 16: num1 + 26]
+    print '000000' , myUserId
+
+    print 'log success'
+
+
+user = Person("", "", "")
+login('phone num', 'psd')
 
 
 
 
+
+#-------------------------------------------------------
 # 获取全部列表  我的id:2529091407 ,在这里关注的时候必须在headers里加Referer,踩了好多坑
 param = '0002_2975_1002_0'
 all_url = 'http://d.weibo.com/108703' + param + '?' + 'page='#体育 ?ajaxpagelet=1&__ref=/1087030002_2975_1002_0
-follow_url = 'http://d.weibo.com/aj/f/followed?ajwvr=6&__rnd=' + str(time.time()).replace('.', '') + '6' # __rnd=1494415341464
 curpage = 1
 nextData = {
     'pids' : 'Pl_Core_F4RightUserList__4',
     'ajaxpagelet' : '1',
     '__ref' : '/1087030002_2975_1002_0',
 }
-followData = {
-    'uid' : '',
-    'objectid' : '',
-    'f' : '1',
-    'extra' : '',
-    'refer_sort' : '',
-    'refer_flag' : '1087030701_2975_1002_0',
-    'location' : 'page_1087030002_2975_1002_0_home',
-    'oid' : param,
-    'wforce' : '1',
-    'nogroup' : 'false',
-    'template' : '1',
-    '_t' : '0',
-    # 'fnick' : ''
-}
-headers['Referer'] = 'http://d.weibo.com/108703' + param
 
-# model
-class Person:
-    def __init__(self, userID, name, fans):
-        self.name = name
-        self.fans = fans
-        self.userID = userID
+
+
 
 
 def followCurpagePer(page):
@@ -164,7 +172,6 @@ def followCurpagePer(page):
     print a
     ids = []
     for x in range(a):
-        print x
         num1 = text.find('usercard=')
         num2 = text.find('title=')
         num3 = text.find('粉丝')
@@ -199,12 +206,158 @@ def followCurpagePer(page):
     # headers.pop('Referer')
 
 
-login('phonenum', 'psd')
+# 关注参数,需要子啊header里加refer
+follow_url = 'http://d.weibo.com/aj/f/followed?ajwvr=6&__rnd=' + str(time.time()).replace('.', '') + '6' # __rnd=1494415341464
+followData = {
+    'uid' : '',
+    'objectid' : '',
+    'f' : '1',
+    'extra' : '',
+    'refer_sort' : '',
+    'refer_flag' : '1087030701_2975_1002_0',
+    'location' : 'page_1087030002_2975_1002_0_home',
+    'oid' : param,
+    'wforce' : '1',
+    'nogroup' : 'false',
+    'template' : '1',
+    '_t' : '0',
+    # 'fnick' : ''
+}
+headers['Referer'] = 'http://d.weibo.com/108703' + param
+
+# 取消关注参数
+allfollow_url = 'http://weibo.com/p/1005056243373121/myfollow?t=1&cfs=&Pl_Official_RelationMyfollow__93_page='
+unallfollow_url = 'http://weibo.com/aj/f/unfollow?ajwvr=6'
+allPage = 1
+
+unFollowData = {
+    'uid' : '',
+    'objectid' : '',
+    'f' : '1',
+    'extra' : '',
+    'refer_sort' : '',
+    # 'refer_flag' : 'followed&refer_flag=0000020001_',
+    'refer_flag' : '0000020001_&refer_flag=followed',
+    # 'refer_flag' : 'followed',
+    # 'refer_flag' : '0000020001_',
+    'location' : 'page_100505_myfollow',
+    'oid' : '',
+    'wforce' : '1',
+    'nogroup' : 'false',
+    'fnick' : '',
+    'template' : '1',
+    'refer_lflag' : '',
+}
 
 # 循环页数
-while curpage <= 2:
-    followCurpagePer(curpage)
-    curpage = curpage + 1
+# while curpage <= 2:
+#     followCurpagePer(curpage)
+#     curpage = curpage + 1
 
+#-------------------------------------------------------
+
+# 判断字符串是否只有中文(暂时没有判断id含有数字的)
+
+def check_contain_chinese(check_str):
+    count = len(check_str)
+    num = 0
+    for ch in check_str.decode('utf-8'):
+        if (u'\u4e00' <= ch <= u'\u9fff'):
+            num = num + 1
+    if num == count/3:
+        return True
+    else:
+        return False
+
+#  获取所有关注
+def getCurPageFollwed(page):
+    # if headers.has_key('Referer'):
+    #     del headers['Referer']
+    url = allfollow_url + str(page)
+    headers['Referer'] = url
+    headers['Host'] = 'weibo.com'
+    # Content-Type:
+
+    # headers['Origin'] = 'http://weibo.com'
+    # headers['X-Requested-With'] = 'XMLHttpRequest'
+    # headers['Accept'] = '*/*'
+    # Origin:http://weibo.com
+
+    allr = s.get(allfollow_url)
+    # print allr.text
+    text = allr.text.encode('utf-8')
+    a = text.count('member_li S_bg1')
+    num = text.find('member_li S_bg1')
+    text = text[num : len(text)]
+    print a
+    ids = []
+    userids = []
+    for x in range(a):
+        num1 = text.find('usercard=')
+        num2 = text.find('title=')
+        # num3 = text.find('粉丝')
+        userid = text[num1 + 14: num1 + 24]
+        str2 = text[num2 + 8: num2 + 40]
+        s2 = str2.rfind('\" ')
+        title = str2[0:(s2 - 1)]
+        # str3 = text[num3 + 26: num3 + 36]
+        # s3 = str3.rfind('<')
+        # fans = str3[0:s3]
+        print userid, title
+        userids.append(userid)
+        per = Person(userid, title, '')
+        isR = check_contain_chinese(per.name)
+        if isR:
+            # print per, ids
+            if per not in ids:
+                ids.append(per)
+                print '++++' + per.name
+        text = text[num1 + 350 : len(text)]
+    print len(ids)
+
+    # unfollow(ids)
+    return ids
+    # 取消本页所有关注,需要在header里加host
+    # for a in range(len(ids)):
+    #     if a != 1:
+    #         continue
+    #     per = ids[a]
+    #     global unFollowData
+    #     unFollowData['uid'] = per.userID
+    #     unFollowData['oid'] = '6243373121'
+    #     unFollowData['fnick'] = per.name
+    #     print unallfollow_url, per.name, per.userID, unFollowData, headers
+    #     tt = s.post(url=unallfollow_url, data=json.dumps(unFollowData), headers=headers)
+    #     print tt.text, tt.status_code
+
+def unfollow(ids):
+    # 取消本页所有关注,需要在header里加host
+    for a in range(len(ids)):
+        if a != 1:
+            continue
+        per = ids[a]
+        global unFollowData
+        unFollowData['uid'] = per.userID
+        unFollowData['oid'] = '6243373121'
+        unFollowData['fnick'] = per.name
+        print unallfollow_url, per.name, per.userID, unFollowData, headers
+        tt = s.post(url=unallfollow_url, data=json.dumps(unFollowData), headers=headers)
+        print tt.text, tt.status_code
+
+
+# getCurPageFollwed(1)
+
+#-------------------------------------------------------
+
+# 获取动态并点赞
+# 个人主页url
+perUrl = 'http://weibo.com/u/%s?from=myfollow_all&is_all=1'
+
+allFollow = getCurPageFollwed(1)
+pp = Person('', '', '')
+pp = allFollow[0]
+print pp.userID, pp.name,perUrl % pp.userID
+ar = s.get(perUrl % pp.userID)
+print ar.text
 
 

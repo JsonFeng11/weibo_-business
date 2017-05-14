@@ -54,8 +54,8 @@ postdata = {
 }
 
 headers = {
-    'User-Agent' : "Mozilla/5.0 (Linux; U; Android 1.6; en-us; SonyEricssonX10i Build/R1AA056) AppleWebKit/528.5  (KHTML, like Gecko) Version/3.1.2 Mobile Safari/525.20.1",
-    'Accept' : 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+    'User-Agent' : "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.11; rv:50.0) Gecko/20100101 Firefox/50.0",
+    'Accept' : '*/*',
     }
 
 
@@ -138,7 +138,7 @@ def login(username, pwd):
 
 
 user = Person("", "", "")
-login('phone num', 'psd')
+login('phone', 'psd')
 
 
 
@@ -353,11 +353,52 @@ def unfollow(ids):
 # 个人主页url
 perUrl = 'http://weibo.com/u/%s?from=myfollow_all&is_all=1'
 
+# 取消收藏,把add变为del
+collectUrl = 'http://weibo.com/aj/fav/mblog/add?ajwvr=6'
+
+# 该方法是点赞行为,如果已点赞,则为取消点赞.反之则为点赞.
+admireUul = 'http://weibo.com/aj/v6/like/add?ajwvr=6&__rnd=' + str(time.time()).replace('.', '')
+
+admireData = {
+    'location' : 'page_100505_home',
+    'version' : 'mini',
+    'qid' : 'heart',
+    'mid' : '',
+    'loc' : 'profile',
+    '_t' : '0'
+}
+collectData = {
+    'mid' : '',
+    'location' : 'page_100505_home'
+}
+
 allFollow = getCurPageFollwed(1)
+# print allFollow
 pp = Person('', '', '')
-pp = allFollow[0]
+pp = allFollow[2]
+print '-------------------'
 print pp.userID, pp.name,perUrl % pp.userID
 ar = s.get(perUrl % pp.userID)
-print ar.text
+# print ar.text
+wantText = ar.text
+wantNum = wantText.find('WB_cardwrap WB_feed_type S_bg2')
+wantUid = wantText[wantNum - 40 + 10 + 2 : wantNum - 12]
+print wantUid
 
+# 收藏
+def collectiong(wantUid):
+    collectData['mid'] = str(wantUid)
+    headers['Referer'] = perUrl
+    print collectData, collectUrl, headers
+    collectResponse = s.post(url=collectUrl, headers=headers, data=collectData)
+    print collectResponse.text
 
+# 点赞
+def admire(wantUid):
+    admireData['mid'] = str(wantUid)
+    headers['Referer'] = perUrl
+    print admireData, admireUul,
+    admireResponse = s.post(url=admireUul, headers=headers, data=admireData)
+    print admireResponse.text
+
+admire(wantUid)

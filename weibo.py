@@ -52,11 +52,19 @@ postdata = {
     'url': 'http://www.weibo.com/ajaxlogin.php?framelogin=1&callback=parent.sinaSSOController.feedBackUrlCallBack',
     'returntype': 'META'
 }
-
+'''
+        Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.96 Mobile Safari/537.36
+'''
+# headers = {
+#
+#     'User-Agent' : "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.96 Mobile Safari/537.36",
+#
+#     'Accept' : '*/*',
+# }
 headers = {
-    'User-Agent' : "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.11; rv:50.0) Gecko/20100101 Firefox/50.0",
-    'Accept' : '*/*',
-    }
+  'User-Agent' : "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.11; rv:50.0) Gecko/20100101 Firefox/50.0",
+  'Accept' : '*/*',
+}
 
 
 # model
@@ -249,6 +257,7 @@ unFollowData = {
     'refer_lflag' : '',
 }
 
+# followCurpagePer(curpage)
 # 循环页数
 # while curpage <= 2:
 #     followCurpagePer(curpage)
@@ -269,83 +278,65 @@ def check_contain_chinese(check_str):
     else:
         return False
 
-#  获取所有关注
+#  获取所有关注,并取消
 def getCurPageFollwed(page):
     # if headers.has_key('Referer'):
     #     del headers['Referer']
     url = allfollow_url + str(page)
     headers['Referer'] = url
     headers['Host'] = 'weibo.com'
-    # Content-Type:
-
-    # headers['Origin'] = 'http://weibo.com'
-    # headers['X-Requested-With'] = 'XMLHttpRequest'
-    # headers['Accept'] = '*/*'
-    # Origin:http://weibo.com
 
     allr = s.get(allfollow_url)
     # print allr.text
+    # print "++++++++"
     text = allr.text.encode('utf-8')
-    a = text.count('member_li S_bg1')
-    num = text.find('member_li S_bg1')
-    text = text[num : len(text)]
+    a = text.count('title W_fb W_autocut')
+    num = text.find('title W_fb W_autocut')
+    text = text[num: len(text)]
     print a
     ids = []
     userids = []
     for x in range(a):
+        nn = text.find('title W_fb W_autocut')
+        text = text[nn + 30: len(text)]
         num1 = text.find('usercard=')
         num2 = text.find('title=')
         # num3 = text.find('粉丝')
         userid = text[num1 + 14: num1 + 24]
-        str2 = text[num2 + 8: num2 + 40]
-        s2 = str2.rfind('\" ')
+        str2 = text[num2 + 8: num2 + 30]
+        s2 = str2.rfind('" u')
         title = str2[0:(s2 - 1)]
-        # str3 = text[num3 + 26: num3 + 36]
-        # s3 = str3.rfind('<')
-        # fans = str3[0:s3]
         print userid, title
-        userids.append(userid)
         per = Person(userid, title, '')
-        isR = check_contain_chinese(per.name)
-        if isR:
-            # print per, ids
-            if per not in ids:
-                ids.append(per)
-                print '++++' + per.name
-        text = text[num1 + 350 : len(text)]
-    print len(ids)
+        if per.userID not  in userids:
+            print per.name
+            ids.append(per)
+            userids.append(userid)
+        text = text[num2 + 100 + 150 : len(text)]
+    print len(ids), userids
 
-    # unfollow(ids)
-    return ids
-    # 取消本页所有关注,需要在header里加host
-    # for a in range(len(ids)):
-    #     if a != 1:
-    #         continue
-    #     per = ids[a]
-    #     global unFollowData
-    #     unFollowData['uid'] = per.userID
-    #     unFollowData['oid'] = '6243373121'
-    #     unFollowData['fnick'] = per.name
-    #     print unallfollow_url, per.name, per.userID, unFollowData, headers
-    #     tt = s.post(url=unallfollow_url, data=json.dumps(unFollowData), headers=headers)
-    #     print tt.text, tt.status_code
-
-def unfollow(ids):
     # 取消本页所有关注,需要在header里加host
     for a in range(len(ids)):
-        if a != 1:
-            continue
+        print 'a'
         per = ids[a]
+        unfollow(per)
+
+
+
+
+# 取消关注
+def unfollow(per):
+    # 取消本页所有关注,需要在header里加host
         global unFollowData
         unFollowData['uid'] = per.userID
         unFollowData['oid'] = '6243373121'
-        unFollowData['fnick'] = per.name
+        # unFollowData['fnick'] = per.name
         print unallfollow_url, per.name, per.userID, unFollowData, headers
-        tt = s.post(url=unallfollow_url, data=json.dumps(unFollowData), headers=headers)
+        tt = s.post(url=unallfollow_url, data=unFollowData, headers=headers)
         print tt.text, tt.status_code
 
 
-# getCurPageFollwed(1)
+getCurPageFollwed(1)
 
 #-------------------------------------------------------
 
@@ -359,6 +350,12 @@ collectUrl = 'http://weibo.com/aj/fav/mblog/add?ajwvr=6'
 # 该方法是点赞行为,如果已点赞,则为取消点赞.反之则为点赞.
 admireUul = 'http://weibo.com/aj/v6/like/add?ajwvr=6&__rnd=' + str(time.time()).replace('.', '')
 
+# 转发的url
+forwardUrl = 'http://weibo.com/aj/v6/mblog/forward?ajwvr=6&domain=100505&__rnd=' + str(time.time()).replace('.', '')
+
+# 评论url
+commentUrl = 'http://weibo.com/aj/v6/comment/add?ajwvr=6&__rnd=' + str(time.time()).replace('.', '')
+
 admireData = {
     'location' : 'page_100505_home',
     'version' : 'mini',
@@ -371,7 +368,39 @@ collectData = {
     'mid' : '',
     'location' : 'page_100505_home'
 }
+forwardData = {
+    'pic_src' : '',
+    'pic_id' : '',
+    'appkey' : '',
+    'mid' : '',
+    'style_type' : '1',
+    'mark' : '',
+    'reason' : '',
+    'location' : 'page_100505_home',
+    'pdetail' : '',
+    'module' : '',
+    'page_module_id' : '',
+    'refer_sort' : '',
+    'rank' : '0',
+    'rankid' : '',
+    '_t' : '0'
+}
 
+commentData = {
+    'act' : 'post',
+    'mid' : '',
+    'uid' : '',
+    'forward' : '0', # 不转发为0, 同时转发到自己微博为1
+    'isroot' : '0',
+    'content' : '', # 转发的内容
+    'location' : 'page_100505_home',
+    'module' : 'scommlist',
+    'group_source' : '',
+    'pdetail' : '',
+    '_t' : '0'
+}
+
+'''
 allFollow = getCurPageFollwed(1)
 # print allFollow
 pp = Person('', '', '')
@@ -384,6 +413,7 @@ wantText = ar.text
 wantNum = wantText.find('WB_cardwrap WB_feed_type S_bg2')
 wantUid = wantText[wantNum - 40 + 10 + 2 : wantNum - 12]
 print wantUid
+'''
 
 # 收藏
 def collectiong(wantUid):
@@ -401,4 +431,26 @@ def admire(wantUid):
     admireResponse = s.post(url=admireUul, headers=headers, data=admireData)
     print admireResponse.text
 
-admire(wantUid)
+# admire(wantUid)
+
+# 转发
+def forward(wantUid):
+    forwardData['mid'] = wantUid
+    forwardData['pdetail'] = '100505' + pp.userID
+    forwardData['reason'] = '要转发的文字'
+    print forwardData
+    forwardResponse = s.post(url=forwardUrl, headers=headers, data=forwardData)
+    print forwardResponse.text
+
+# forward(wantUid)
+
+# 评论
+def comment(wantUid):
+    commentData['mid'] = wantUid
+    commentData['pdetail'] = '100505' + pp.userID
+    commentData['content'] = '要评论的文字'
+    print commentData
+    commentResponse = s.post(url=commentUrl, headers=headers, data=commentData)
+    print commentResponse
+
+# comment(wantUid)
